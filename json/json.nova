@@ -1,0 +1,63 @@
+# json.nova — минимальный JSON: чтение плоских объектов вида {"key":"value","n":5}
+# и экранирование строк для сборки JSON вручную через конкатенацию.
+# Ограничение: только плоские объекты (без вложенных объектов/массивов, без экранированных
+# кавычек внутри значений) — достаточно для простых API-запросов/ответов.
+
+fn json_get(json: string, key: string) -> string {
+    needle = "\"" + key + "\""
+    idx = index_of(json, needle)
+    if idx == -1 {
+        return ""
+    }
+
+    i = idx + len(needle)
+    while i < len(json) {
+        if json[i] == ":" {
+            i = i + 1
+            break
+        }
+        i = i + 1
+    }
+    while i < len(json) {
+        if json[i] == " " {
+            i = i + 1
+        } else {
+            break
+        }
+    }
+    if i >= len(json) {
+        return ""
+    }
+
+    if json[i] == "\"" {
+        start = i + 1
+        j = start
+        while j < len(json) {
+            if json[j] == "\"" {
+                break
+            }
+            j = j + 1
+        }
+        return substr(json, start, j - start)
+    }
+
+    start = i
+    j = start
+    while j < len(json) {
+        c = json[j]
+        if c == "," {
+            break
+        }
+        if c == "}" {
+            break
+        }
+        j = j + 1
+    }
+    return trim(substr(json, start, j - start))
+}
+
+fn json_escape(s: string) -> string {
+    out = replace(s, "\\", "\\\\")
+    out = replace(out, "\"", "\\\"")
+    return out
+}

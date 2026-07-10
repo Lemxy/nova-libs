@@ -1,0 +1,13 @@
+# zlib.nova — обёртка над настоящей zlib (crc32/adler32 контрольные суммы).
+# Требует zlib1.dll рядом с программой (или в PATH/ucrt64\bin).
+
+extern "z" fn crc32(crc: int, buf: string, len: int) -> int
+extern "z" fn adler32(adler: int, buf: string, len: int) -> int
+
+fn crc32_of(s: string) -> int {
+    return crc32(0, s, len(s))
+}
+
+fn adler32_of(s: string) -> int {
+    return adler32(1, s, len(s))
+}

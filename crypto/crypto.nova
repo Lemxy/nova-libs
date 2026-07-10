@@ -1,0 +1,17 @@
+# crypto.nova — MD5/SHA1/SHA256 через настоящий OpenSSL (via nova_crypto_shim.dll).
+
+extern "nova_crypto_shim" fn nova_md5_hex(input: string) -> string
+extern "nova_crypto_shim" fn nova_sha1_hex(input: string) -> string
+extern "nova_crypto_shim" fn nova_sha256_hex(input: string) -> string
+
+fn md5(s: string) -> string {
+    return nova_md5_hex(s)
+}
+
+fn sha1(s: string) -> string {
+    return nova_sha1_hex(s)
+}
+
+fn sha256(s: string) -> string {
+    return nova_sha256_hex(s)
+}

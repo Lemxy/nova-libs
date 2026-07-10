@@ -1,0 +1,12 @@
+# http_client.nova — реальный HTTP-клиент через libcurl (via nova_http_shim.dll).
+
+extern "nova_http_shim" fn nova_http_get(url: string) -> string
+extern "nova_http_shim" fn nova_http_post(url: string, body: string) -> string
+
+fn http_get(url: string) -> string {
+    return nova_http_get(url)
+}
+
+fn http_post(url: string, body: string) -> string {
+    return nova_http_post(url, body)
+}

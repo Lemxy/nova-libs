@@ -1,0 +1,54 @@
+# sqlite.nova — обёртка над настоящей sqlite3 (FFI, extern "sqlite3").
+# Требует sqlite3.dll рядом с программой (или в PATH/ucrt64\bin).
+
+extern "sqlite3" fn sqlite3_open(filename: string, ppDb: &int) -> int
+extern "sqlite3" fn sqlite3_close(db: int) -> int
+extern "sqlite3" fn sqlite3_prepare_v2(db: int, sql: string, nbyte: int, ppStmt: &int, pzTail: int) -> int
+extern "sqlite3" fn sqlite3_step(stmt: int) -> int
+extern "sqlite3" fn sqlite3_finalize(stmt: int) -> int
+extern "sqlite3" fn sqlite3_column_text(stmt: int, col: int) -> string
+extern "sqlite3" fn sqlite3_column_int(stmt: int, col: int) -> int
+extern "sqlite3" fn sqlite3_errmsg(db: int) -> string
+
+fn db_open(path: string) -> int {
+    h = 0
+    sqlite3_open(path, &h)
+    return h
+}
+
+fn db_close(db: int) {
+    sqlite3_close(db)
+}
+
+fn db_exec(db: int, sql: string) {
+    stmt = 0
+    sqlite3_prepare_v2(db, sql, -1, &stmt, 0)
+    sqlite3_step(stmt)
+    sqlite3_finalize(stmt)
+}
+
+# выполняет SQL и возвращает текстовое значение первой колонки первой строки ("" если строк нет)
+fn db_query_text(db: int, sql: string) -> string {
+    stmt = 0
+    sqlite3_prepare_v2(db, sql, -1, &stmt, 0)
+    result = ""
+    if sqlite3_step(stmt) == 100 {
+        # sqlite3_column_text отдаёт указатель на память самого stmt — она станет
+        # невалидной после sqlite3_finalize. "+ """ форсирует копию строки в свою память.
+        result = sqlite3_column_text(stmt, 0) + ""
+    }
+    sqlite3_finalize(stmt)
+    return result
+}
+
+# выполняет SQL и возвращает целое значение первой колонки первой строки
+fn db_query_int(db: int, sql: string) -> int {
+    stmt = 0
+    sqlite3_prepare_v2(db, sql, -1, &stmt, 0)
+    result = 0
+    if sqlite3_step(stmt) == 100 {
+        result = sqlite3_column_int(stmt, 0)
+    }
+    sqlite3_finalize(stmt)
+    return result
+}

@@ -1,0 +1,51 @@
+# http.nova — минимальный HTTP-слой поверх socket_* примитивов.
+# Разбор запроса (метод/путь/тело) и отправка ответа с корректными заголовками.
+
+struct HttpRequest {
+    method: string, path: string, body: string
+}
+
+fn http_parse_request(raw: string) -> HttpRequest {
+    lines = split(raw, "\r\n")
+    request_line = lines[0]
+    parts = split(request_line, " ")
+    method = parts[0]
+    path = parts[1]
+
+    body = ""
+    sep_idx = index_of(raw, "\r\n\r\n")
+    if sep_idx != -1 {
+        body = substr(raw, sep_idx + 4, len(raw) - sep_idx - 4)
+    }
+    return HttpRequest(method, path, body)
+}
+
+fn http_send(conn: int, status: int, status_text: string, content_type: string, body: string) {
+    response = "HTTP/1.1 " + str(status) + " " + status_text + "\r\n"
+    response = response + "Content-Type: " + content_type + "\r\n"
+    response = response + "Content-Length: " + str(len(body)) + "\r\n"
+    response = response + "Connection: close\r\n\r\n"
+    response = response + body
+    socket_write(conn, response)
+}
+
+fn http_ok(conn: int, body: string) {
+    http_send(conn, 200, "OK", "text/plain; charset=utf-8", body)
+}
+
+fn http_json(conn: int, body: string) {
+    http_send(conn, 200, "OK", "application/json", body)
+}
+
+fn http_html(conn: int, body: string) {
+    http_send(conn, 200, "OK", "text/html; charset=utf-8", body)
+}
+
+fn http_not_found(conn: int) {
+    http_send(conn, 404, "Not Found", "text/plain", "404 Not Found")
+}
+
+fn http_serve_file(conn: int, path: string, content_type: string) {
+    body = read_file(path)
+    http_send(conn, 200, "OK", content_type, body)
+}
